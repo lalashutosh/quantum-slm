@@ -1,0 +1,24 @@
+
+# Model weights and logs
+models/
+logs/
+outputs/
+*.pt
+*.bin
+*.pth
+
+# Python/Environment
+__pycache__/
+*.pyc
+.env
+venv/
+.ipynb_checkpoints/
+
+# Data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# System
+.DS_Store
