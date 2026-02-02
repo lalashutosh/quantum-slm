@@ -7,7 +7,7 @@ General models (GPT-4, Claude) suffer from significant "Temporal and Domain Gaps
 
 **Quantum-SLM** is my attempt to build a specialized local assistant that doesn't just retrieve text, but has the technical logic of my research "baked" into its weights.
 
-## 🧠 SLM advantages
+##  SLM advantages
 For a researcher, a 1B-3B parameter model running locally on a single workstation (NVIDIA RTX A2000) is superior to a giant cloud model for three reasons:
 1. **Privacy:** SOTA research stays local.
 2. **Speed:** Instant inference for iterative brainstorming.
