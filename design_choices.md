@@ -26,7 +26,7 @@ quantum-slm/
 - **Reproducibility:** The `run_build.sh` script ensures anyone can replicate builds v1, v2, v3 identically.
 - **Maintainability:** Not a 500-line Jupyter notebook. This is production-ready code structure.
 
-**Vaisala Relevance:** Enterprise AI needs maintainable pipelines, not one-off experiments.
+**Enterprise Relevance:** Production AI systems need maintainable pipelines, not one-off experiments.
 
 ---
 
@@ -58,7 +58,7 @@ def process_thesis(input_file, output_file):
 - **Human-in-the-Loop:** I manually select relevant paragraphs using keyword filtering. This ensures high data quality over high data quantity.
 - **Mimics Research Reading:** Researchers understand papers by seeing ideas in context, not random sentence extraction.
 
-**Vaisala Relevance:** Sensor documentation and technical manuals are contextual. A calibration procedure only makes sense with surrounding setup instructions.
+**Enterprise Relevance:** Sensor documentation and technical manuals are contextual. A calibration procedure only makes sense with surrounding setup instructions.
 
 ---
 
@@ -92,7 +92,7 @@ training_args = TrainingArguments(
 - **Training Speed:** LoRA fine-tuning took 60 seconds. Full fine-tuning would take hours.
 - **Enterprise Hardware:** I didn't use a $10,000 A100. This runs on a $600 GPU you can buy at Best Buy.
 
-**Vaisala Relevance:** Production AI must run on available hardware, not idealized cloud infrastructure.
+**Enterprise Relevance:** Production AI must run on available hardware, not idealized cloud infrastructure.
 
 ---
 
@@ -121,7 +121,7 @@ models/
 - **Rollback Capability:** If v3 overfits, I revert to v2.
 - **Documentation:** Each build has a corresponding config file explaining hyperparameters.
 
-**Vaisala Relevance:** Research projects need version control for models, just like code.
+**Enterprise Relevance:** Research projects need version control for models, just like code.
 
 ---
 
@@ -165,7 +165,7 @@ def evaluate(model, test_suite):
 - **Failure Analysis:** If the model fails on noise questions but succeeds on kernel questions, I know where to add training data.
 - **Continuous Validation:** Each new build is automatically tested against a benchmark.
 
-**Vaisala Relevance:** Production models need automated testing, not manual spot-checks.
+**Enterprise Relevance:** Production models need automated testing, not manual spot-checks.
 
 ---
 
@@ -189,7 +189,7 @@ formatted = f"""### Instruction:
 - Instruction: "Explain this like I'm a PhD student" → Technical depth
 - Instruction: "Explain this like I'm an engineer" → Practical focus
 
-**Vaisala Relevance:** Different stakeholders need different explanations (researchers vs. technicians vs. managers).
+**Enterprise Relevance:** Different stakeholders need different explanations (researchers vs. technicians vs. managers).
 
 ---
 
@@ -215,9 +215,9 @@ formatted = f"""### Instruction:
 
 ---
 
-## What I Learned (And What I'd Do Differently)
+[//]: <> (What I Learned And What I'd Do Differently)
 
-### 1. Data Quality > Data Quantity
+<!--### 1. Data Quality > Data Quantity
 12 high-quality examples beat 1,000 random paragraphs. The model learned my thesis findings because I manually selected the most information-dense paragraphs.
 
 **Next Time:** Build a better data engine that extracts equations, code, and figures—not just text.
@@ -231,36 +231,23 @@ Manually reading model outputs doesn't scale. I need a test suite with expected 
 I can't remember what hyperparameters I used for my first training run. Now I save everything.
 
 **Next Time:** Auto-log hyperparameters, training loss, and dataset stats for every build.
-
 ---
+-->
 
 ## Design Philosophy Summary
 
-This project reflects three core principles:
 
-1. **Understand Before Deploying**  
-   I didn't blindly copy a tutorial. I chose each design decision deliberately (LoRA for efficiency, 4-bit quantization for memory, context windows for learning quality).
+This project prioritizes reliability and resource efficiency through a systematic implementation process:
 
-2. **Build for Iteration**  
-   v1 is a proof-of-concept. v2 will be better. v3 will be better still. The pipeline is designed for continuous improvement.
+*   **Architectural Validation:** Establishing a lean baseline (Build v1) to verify that 4-bit NF4 quantization and LoRA adapters perform accurately within hardware-specific (12GB VRAM) constraints.
+*   **Verification-Driven Development:** Utilizing automated evaluation scripts to validate the model's technical reasoning against empirical research findings, mitigating the risk of hallucinations in niche domains.
+*   **Lifecycle Modularity:** Implementing a script-based, versioned pipeline to ensure that model updates are reproducible, traceable, and capable of systematic rollbacks.
+*   **Technical Transparency:** Documenting the engineering rationale behind data-filtering and quantization choices to ensure the system remains maintainable and ready for collaborative integration.
 
-3. **Prioritize Practicality**  
-   This runs on a single GPU. It trains in 60 seconds. It's reproducible. This is how real-world AI engineering works—not with unlimited compute, but with constraints that force creativity.
-
+These choices help me bridge the gap between an idea and the project that is ready for deployment. 
+<!--This methodology is designed to bridge the gap between experimental research and the deployment of stable, domain-specific AI assets in a production environment.-->
 ---
-
-**For Vaisala Reviewers:**
-
-These design choices aren't just technical decisions. They're a window into how I think about building production AI systems:
-- Start simple (v1 proof-of-concept)
-- Validate rigorously (evaluation suite)
-- Iterate systematically (versioned builds)
-- Document thoroughly (this file)
-
-If selected for the "Small but Mighty" internship, I'd apply this same methodology to Vaisala's industrial AI challenges.
-
----
-
+            
 **Ashutosh Lal**  
 Quantum Technology, Aalto University  
 ashutosh.lal@aalto.fi
