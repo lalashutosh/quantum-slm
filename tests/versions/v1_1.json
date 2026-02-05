@@ -1,0 +1,18 @@
+{
+    "version": "1.1",
+    "description": "Quantum Kernel Research - Core Benchmarks",
+    "tests": [
+        {
+            "id": "q1_advantage",
+            "question": "Explain quantum advantage in kernel methods", 
+            "concepts": ["Hilbert space", "feature map"],
+            "reference": "Quantum kernel methods provide a promising approach to supervised learning. By mapping data to a higher dimensional feature space (Hilbert space), SVMs can find decision boundaries that are not linearly separable in the original finite space."
+        },
+        {
+            "id": "q3_threshold",
+            "question": "What is coherent errors fow quantum computing?", 
+            "concepts": ["minima", "stagnates"],
+            "reference": "Coherent errors are unitary errors meaning that they can be expressed as unitary operations performed on the quantum state. In practice, coherent errors appear as over or under rotations of a quantum gate [16]. In the coherent approach every shot within the bound ϵ is random but consistent. This means that we get the same error for a gate operation every time for that particular run. This translates to a consistent miscalibration that causes distortion in the kernel matrix"
+        }
+    ]
+}
