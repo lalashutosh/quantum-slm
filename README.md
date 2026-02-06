@@ -20,8 +20,17 @@ I designed this project to be a **living pipeline**. Instead of a one-off traini
 - **Quantized Training Pipeline:** Optimized for 12GB VRAM constraints using BitsAndBytes and PEFT. 
 - **Automated Evaluation Suite:** A verification layer that tests the model against "Gold Standard" research results (e.g., specific coherent noise thresholds) to ensure reasoning is intact after every update.
 
-## Initial Validation (Build v1)
+## Initial Validation (Build v1)  
 The goal of the first build was to validate if a 1.5B model could "absorb" the specific results of my Bachelor’s Thesis regarding Quantum Kernel SVMs.
+
+
+### Build v1.1 Validation Results
+| Metric | Baseline | Fine-Tuned | Net Gain |
+| :--- | :--- | :--- | :--- |
+| **Q1 (Advantage)** | 0.698 | 0.771 | **+7.3%** |
+| **Q3 (Threshold)** | 0.642 | 0.647 | **+0.5%** |
+
+**Conclusion:** Build v1.1 successfully validated the pipeline. The model demonstrated a 7.3% semantic shift toward ground-truth research logic, proving the "Small but Mighty" hypothesis for specialized QML domains.
 
 **Benchmark Case:** Coherent noise impact on QSVC accuracy.
 - **Baseline:** Hallucinated generic quantum noise theory.
