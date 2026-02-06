@@ -83,4 +83,12 @@ def train_model(config_name="v1"):
     print(f"Expertise saved to {output_dir}")
 
 if __name__ == "__main__":
-    train_model("v1")
+    import sys
+    # This picks up the "v1_2" from the command line
+    if len(sys.argv) > 1:
+        version_name = sys.argv[1]
+    else:
+        version_name = "v1"
+        
+    print(f"🛠️ Training version: {version_name}")
+    train_model(version_name)

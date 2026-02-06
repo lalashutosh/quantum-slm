@@ -2,14 +2,17 @@ import torch
 import time
 import json
 import os
+import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from sentence_transformers import SentenceTransformer, util
 
-def load_test_suite(version="v1_1"):
-    file_path = f"tests/versions/{version}.json"
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Test suite version {version} not found at {file_path}")
+
+
+def load_test_suite(version="v1_2"):
+    with open(f"tests/registry.yaml", 'r') as f:
+        data = yaml.safe_load(f)
+    return data['benchmarks'], data['version']
     
     with open(file_path, 'r') as f:
         data = json.load(f)
@@ -107,5 +110,8 @@ def evaluate_build(model_version="v1", test_version="v1_1"):
     print(f"\n✅ Evaluation complete. Detailed logs saved to: {log_path}")
 
 if __name__ == "__main__":
-    # You can now call this with specific versions
-    evaluate_build(model_version="v1", test_version="v1_1")
+    import sys
+    # Pass the model version (e.g., v1_2) and the test suite version (e.g., v1_1)
+    m_ver = sys.argv[1] if len(sys.argv) > 1 else "v1"
+    t_ver = sys.argv[2] if len(sys.argv) > 2 else "v1_1"
+    evaluate_build(model_version=m_ver, test_version=t_ver)

@@ -1,0 +1,20 @@
+version: "1.2"
+metadata:
+  domain: "Quantum Kernel Methods"
+  
+benchmarks:
+  - id: "q1_rkhs_logic"
+    question: "What is the relationship between the feature map and the RKHS?"
+    concepts: ["Hilbert space", "mapping", "inner product"]
+    reference: |
+      A feature map phi maps inputs to vectors in a Hilbert space F. 
+      Each feature map gives rise to a unique Reproducing Kernel Hilbert Space (RKHS).
+      The kernel function is defined as kappa(x, x0) = <phi(x), phi(x0)>.
+
+  - id: "q2_svm_optimization"
+    question: "How is the SVM dual problem formulated for quantum kernels?"
+    concepts: ["Lagrangian", "Gram matrix", "alpha"]
+    reference: |
+      The dual form of SVM minimizes L(alpha) = sum(alpha_i) - 0.5 * sum(alpha_i * alpha_j * y_i * y_j * K_ij).
+      K_ij is the Gram matrix where each entry is the inner product (fidelity) 
+      between two input vectors in the quantum feature space.
