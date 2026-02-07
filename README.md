@@ -46,6 +46,18 @@ The goal of the first build was to validate if a 1.5B model could "absorb" the s
 - **Dataset Size:** Build v1 is a proof-of-concept trained on a curated subset of research. Future iterations require a broader corpus (e.g., full ArXiv integration) to improve linguistic variety.
 - **Benchmarking:** Quantitative comparisons against zero-shot LLMs and RAG baselines are planned for Build v2 to formally validate the precision gain.
 
+## Phase 2: Hybrid RAG-SLM Integration
+To transition from a "trained" model to a "grounded" research assistant, I implemented a **Retrieval-Augmented Generation (RAG)** layer using LangChain and ChromaDB.
+
+### Key RAG Features:
+- **Recursive Structural Chunking:** Utilizes a hierarchical delimiter set (`["\n\n", "\n", ". ", " "]`) that prioritizes document structure (paragraphs and sentences). This ensures the SLM receives logically coherent blocks of text rather than character-count fragments.
+- **LaTeX Normalization Engine:** Rather than treating mathematical notation as opaque noise, the system normalizes Unicode ligatures and maps LaTeX symbols (e.g., bra-kets, kernels, and summations) to natural language equivalents. This significantly improves embedding density, allowing the retriever to match conceptual queries to mathematical symbols that would otherwise have low cosine similarity.
+- **MMR Retrieval:** Utilized **Maximal Marginal Relevance (MMR)** to ensure retrieved context represents a diverse set of research findings, preventing redundant context injection.
+- **Inference Stability:** Configured the 1.5B parameter model with a 1.1 repetition penalty and Top-P sampling to eliminate generation loops while maintaining technical grounding.
+
+### The "Hybrid" Advantage
+During testing, the RAG system allowed the model to cite specific experimental results from external PDFs (like the Havlíček 2019 paper) that were not part of the initial fine-tuning set, providing a robust "Source of Truth" that mitigates hallucination.
+
 ## The Path Forward
 I am moving away from seeing AI as a "black box." My objective is to continue developing this pipeline to ingest the full **arXiv:quant-ph** dataset. By understanding how different parts of the SLM stack come together—from tokenization to weight adaptation—I can build tools that provide **confidence** in scientific research, not just probability.
 
