@@ -1,4 +1,4 @@
-# Quantum-SLM: Domain-Specific Adaptation for Quantum Kernel Research
+# Quantum-SLM with RAG: Domain-Specific Adaptation for Quantum Kernel Research
 
 ## Background and Motivation
 This repository is an ongoing research engineering effort to solve a specific bottleneck in **Quantum Machine Learning (QML)** research: the failure of general-purpose LLMs to reason accurately about SOTA physics.
