@@ -19,6 +19,10 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+qml_papers/*
+papers/*
 
 # System
 .DS_Store
+
+
