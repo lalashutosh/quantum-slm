@@ -18,7 +18,7 @@ def process_corpus(input_folder, output_file):
     files = glob.glob(os.path.join(input_folder, "*.txt"))
     
     for file_path in files:
-        print(f"📖 Processing {os.path.basename(file_path)}...")
+        print(f"Processing {os.path.basename(file_path)}...")
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             raw_content = f.read()
             
@@ -47,7 +47,7 @@ def process_corpus(input_folder, output_file):
         for item in dataset:
             f.write(json.dumps(item) + "\n")
             
-    print(f"✨ Build Complete: {len(dataset)} samples generated from {len(files)} files.")
+    print(f"Build Complete: {len(dataset)} samples generated from {len(files)} files.")
 
 if __name__ == "__main__":
     os.makedirs("data/processed", exist_ok=True)

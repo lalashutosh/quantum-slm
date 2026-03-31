@@ -3,7 +3,7 @@ import os
 import glob
 import torch
 
-# CRITICAL: Path hack must come BEFORE other imports
+# PATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -17,7 +17,7 @@ DB_PATH = "./rag_db"
 PAPERS_DIR = "data/raw/pdfs" 
 
 def main():
-    print("🚀 Initializing Quantum-RAG System...")
+    print("Initializing Quantum-RAG System...")
     rag = QuantumRAG(persist_path=DB_PATH, embedding_model="BAAI/bge-large-en-v1.5")
 
     # --- PHASE 1: DYNAMIC INDEXING ---
@@ -27,27 +27,27 @@ def main():
         pdf_files = glob.glob(os.path.join(PAPERS_DIR, "*.pdf"))
         
         if not pdf_files:
-            print(f"❌ Error: No PDF files found in {PAPERS_DIR}. Please check the folder.")
+            print(f"Error: No PDF files found in {PAPERS_DIR}. Please check the folder.")
             return
 
-        print(f"📥 Found {len(pdf_files)} papers. Starting dynamic ingestion...")
+        print(f"Found {len(pdf_files)} papers. Starting dynamic ingestion...")
         
         for pdf_path in pdf_files:
             # Generate paper_id from filename (e.g., 'havlicek_2019.pdf' -> 'havlicek_2019')
             paper_id = os.path.splitext(os.path.basename(pdf_path))[0]
-            print(f"🔍 Processing: {paper_id}")
+            print(f"Processing: {paper_id}")
             
             rag.index_paper(
                 pdf_path=pdf_path, 
                 paper_id=paper_id, 
                 metadata={"source": "research_corpus"}
             )
-        print("✅ Vector database created successfully.")
+        print("Vector database created successfully.")
     else:
-        print("✅ Vector database found. Skipping indexing.")
+        print("Vector database found. Skipping indexing.")
 
     # --- PHASE 2: LOAD FINE-TUNED SLM (4-bit) ---
-    print("📥 Loading Specialized SLM (4-bit QLoRA)...")
+    print("Loading Specialized SLM (4-bit QLoRA)...")
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
@@ -65,11 +65,11 @@ def main():
     # --- PHASE 3: RESEARCH QUERY ---
     query = "Based on the experiments, what happens to the SVM accuracy when coherent noise reaches the pi/6 threshold?"
     
-    print(f"\n🔍 Querying RAG System: {query}")
+    print(f"\n Querying RAG System: {query}")
     response = rag.generate_with_context(model, tokenizer, query)
     
     print("\n" + "="*50)
-    print("🤖 RAG-AUGMENTED RESEARCH ASSISTANT:")
+    print(" RAG-AUGMENTED RESEARCH ASSISTANT:")
     print("="*50)
     print(response)
     print("="*50)

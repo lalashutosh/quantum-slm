@@ -39,7 +39,7 @@ def evaluate_build(model_version="v1", test_version="v1_1"):
     # 1. Load versioned tests from JSON
     test_cases, version_tag = load_test_suite(test_version)
 
-    print(f"🧪 Running Evaluation: Model {model_version} vs Test Suite {version_tag}")
+    print(f"Running Evaluation: Model {model_version} vs Test Suite {version_tag}")
     
     base_model_id = "Qwen/Qwen2.5-1.5B-Instruct"
     adapter_path = f"models/{model_version}_weights"
@@ -49,7 +49,7 @@ def evaluate_build(model_version="v1", test_version="v1_1"):
     sim_model = SentenceTransformer('all-MiniLM-L6-v2')
     
     # 3. Load BASE Model
-    print("📥 Loading Baseline Model for comparison...")
+    print("Loading Baseline Model for comparison...")
     model = AutoModelForCausalLM.from_pretrained(
         base_model_id, 
         torch_dtype=torch.float16, 
@@ -63,7 +63,7 @@ def evaluate_build(model_version="v1", test_version="v1_1"):
         test['baseline_answer'] = run_inference(model, tokenizer, test['question'])
 
     # 4. Load FINE-TUNED Adapter
-    print("\n📥 Loading Fine-Tuned Adapter...")
+    print("\nLoading Fine-Tuned Adapter...")
     model = PeftModel.from_pretrained(model, adapter_path)
     
     # Run Suite on Fine-Tuned
@@ -107,7 +107,7 @@ def evaluate_build(model_version="v1", test_version="v1_1"):
             "results": final_results
         }, f, indent=4)
     
-    print(f"\n✅ Evaluation complete. Detailed logs saved to: {log_path}")
+    print(f"\nEvaluation complete. Detailed logs saved to: {log_path}")
 
 if __name__ == "__main__":
     import sys
