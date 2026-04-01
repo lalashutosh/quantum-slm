@@ -1,48 +1,99 @@
-import json
-import re
+import torch
+from datasets import load_dataset
+from transformers import (
+    AutoModelForCausalLM, 
+    AutoTokenizer, 
+    BitsAndBytesConfig, 
+    TrainingArguments, 
+    Trainer, 
+    DataCollatorForLanguageModeling
+)
+from peft import LoraConfig, get_peft_model
 import os
 
-def parse_excerpts_to_jsonl(input_file, output_file):
-    with open(input_file, 'r', encoding='utf-8') as f:
-        content = f.read()
+def train_7b_model(version="v2"):
+    model_id = "Qwen/Qwen2.5-7B-Instruct"
+    dataset_path = f"data/processed/train_{version}_excerpts.jsonl"
+    output_dir = f"models/{version}_weights"
 
-    # Split by individual papers (assuming double newline between excerpts)
-    excerpts = content.split('\n\n')
-    dataset = []
+    # --- DECISION 1: 4-BIT NF4 QUANTIZATION ---
+    # Why: A 7B model in FP16 takes 14GB VRAM just to load (exceeding your 12GB).
+    # NF4 (Normal Float 4) is a data type optimized for normally distributed weights.
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16, # Math happens in 16-bit
+        bnb_4bit_use_double_quant=True,       # Quantizes the quantization constants (saves ~0.5GB)
+    )
 
-    for item in excerpts:
-        if "Paper:" in item and "Approach:" in item:
-            # Clean up keys for the prompt
-            # Use Regex to extract fields
-            try:
-                title = re.search(r"Paper: \[(.*?)\]", item).group(1)
-                problem = re.search(r"Problem: \[(.*?)\]", item).group(1)
-                approach = re.search(r"Approach: \[(.*?)\]", item).group(1)
-                result = re.search(r"Result: \[(.*?)\]", item).group(1)
-                implication = re.search(r"Implication: \[(.*?)\]", item).group(1)
-                open_q = re.search(r"Open questions: \[(.*?)\]", item).group(1)
+    print(f"📦 Loading {model_id}...")
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer.pad_token = tokenizer.eos_token
 
-                # STRUCTURED LOGIC PROMPT
-                instruction = f"Analyze the following research problem in Quantum Machine Learning and propose a technical approach based on the study: {title}"
-                input_context = f"Scientific Problem: {problem}"
-                
-                # The 'Output' is the synthesis of the rest of the fields
-                output = (f"Approach: {approach}\n"
-                          f"Demonstrated Result: {result}\n"
-                          f"Field Implication: {implication}\n"
-                          f"Future Work: {open_q}")
+    # --- DECISION 2: GRADIENT CHECKPOINTING ---
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        quantization_config=bnb_config,
+        device_map="auto",
+        trust_remote_code=True
+    )
+    # Why: This is the MOST IMPORTANT line for 12GB GPUs.
+    # It stops storing all intermediate activations for the backward pass, 
+    # re-calculating them on the fly instead. Reduces memory usage by ~30-50%.
+    model.gradient_checkpointing_enable() 
 
-                formatted = f"### Instruction:\n{instruction}\n\n### Input:\n{input_context}\n\n### Response:\n{output}"
-                dataset.append({"text": formatted})
-            except AttributeError:
-                continue # Skip if format is slightly off
+    # --- DECISION 3: TARGET ALL LINEAR MODULES (LoRA+) ---
+    # Why: Standard LoRA only trains q_proj and v_proj. 
+    # For complex physics logic, we need to adapt the MLP layers (gate, up, down).
+    peft_config = LoraConfig(
+        r=16, 
+        lora_alpha=32,
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        lora_dropout=0.05,
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+    model = get_peft_model(model, peft_config)
 
-    with open(output_file, 'w') as f:
-        for entry in dataset:
-            f.write(json.dumps(entry) + "\n")
+    # --- DECISION 4: DATA PIPELINE ---
+    dataset = load_dataset("json", data_files=dataset_path, split="train")
     
-    print(f"✅ Created {len(dataset)} structured logic samples in {output_file}")
+    def tokenize_function(examples):
+        return tokenizer(examples["text"], truncation=True, max_length=1024)
+
+    # Why: max_length=1024. VRAM usage scales quadratically O(n^2) with sequence length.
+    # On an A2000, 2048 length might trigger an OOM during the backward pass.
+    tokenized_dataset = dataset.map(tokenize_function, batched=False)
+
+    # --- DECISION 5: AGGRESSIVE GRADIENT ACCUMULATION ---
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        per_device_train_batch_size=1,   # Must be 1 for 7B models on 12GB
+        gradient_accumulation_steps=16,  # Why: Simulates a batch size of 16 (1*16).
+                                         # Smaller batches cause unstable gradients; 16 is "smooth."
+        learning_rate=1e-4,              # Standard for LoRA; higher can "break" the weights.
+        logging_steps=1,
+        max_steps=50,                    # Number of iterations
+        fp16=True,                       # Faster on NVIDIA Ampere (A2000)
+        optim="paged_adamw_32bit",       # Why: Offloads optimizer state to CPU RAM if needed.
+        save_total_limit=1,
+        report_to="none"
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=tokenized_dataset,
+        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
+    )
+
+    print("🚀 Starting Logic Injection (7B)...")
+    trainer.train()
+    
+    model.save_pretrained(output_dir)
+    print(f"✅ Specialized Weights Saved: {output_dir}")
 
 if __name__ == "__main__":
-    # Ensure raw file exists
-    parse_excerpts_to_jsonl("data/raw/excerpts.txt", "data/processed/train_v2_excerpts.jsonl")
+    import sys
+    version = sys.argv[1] if len(sys.argv) > 1 else "v2"
+    train_7b_model(version)
