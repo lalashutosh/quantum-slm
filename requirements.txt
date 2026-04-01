@@ -12,3 +12,9 @@ protobuf
 scipy
 pyyaml
 arxiv
+langchain>=0.1.0
+langchain-community
+langchain-core
+langchain-huggingface
+chromadb
+pypdf

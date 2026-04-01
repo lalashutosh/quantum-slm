@@ -1,7 +1,7 @@
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain.tools import Tool
 from langchain_core.prompts import PromptTemplate
-from langchain_community.llms import HuggingFacePipeline
+from langchain_huggingface import HuggingFacePipeline
 from transformers import pipeline
 
 # Import your existing V1 components
