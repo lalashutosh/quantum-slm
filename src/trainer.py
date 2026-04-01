@@ -1,94 +1,48 @@
-# src/trainer.py
-import torch
-from datasets import load_dataset
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    TrainingArguments,
-    Trainer,
-    DataCollatorForLanguageModeling
-)
-from peft import LoraConfig, get_peft_model
+import json
+import re
 import os
 
-def train_model(config_name="v1"):
-    model_id = "Qwen/Qwen2.5-1.5B-Instruct" 
-    dataset_path = f"data/processed/train_{config_name}.jsonl"
-    output_dir = f"models/{config_name}_weights"
+def parse_excerpts_to_jsonl(input_file, output_file):
+    with open(input_file, 'r', encoding='utf-8') as f:
+        content = f.read()
 
-    # 1. Quantization (Fit on 12GB GPU)
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-    )
+    # Split by individual papers (assuming double newline between excerpts)
+    excerpts = content.split('\n\n')
+    dataset = []
 
-    # 2. Load Model & Tokenizer
-    print(f"Loading {model_id}...")
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    tokenizer.pad_token = tokenizer.eos_token
+    for item in excerpts:
+        if "Paper:" in item and "Approach:" in item:
+            # Clean up keys for the prompt
+            # Use Regex to extract fields
+            try:
+                title = re.search(r"Paper: \[(.*?)\]", item).group(1)
+                problem = re.search(r"Problem: \[(.*?)\]", item).group(1)
+                approach = re.search(r"Approach: \[(.*?)\]", item).group(1)
+                result = re.search(r"Result: \[(.*?)\]", item).group(1)
+                implication = re.search(r"Implication: \[(.*?)\]", item).group(1)
+                open_q = re.search(r"Open questions: \[(.*?)\]", item).group(1)
+
+                # STRUCTURED LOGIC PROMPT
+                instruction = f"Analyze the following research problem in Quantum Machine Learning and propose a technical approach based on the study: {title}"
+                input_context = f"Scientific Problem: {problem}"
+                
+                # The 'Output' is the synthesis of the rest of the fields
+                output = (f"Approach: {approach}\n"
+                          f"Demonstrated Result: {result}\n"
+                          f"Field Implication: {implication}\n"
+                          f"Future Work: {open_q}")
+
+                formatted = f"### Instruction:\n{instruction}\n\n### Input:\n{input_context}\n\n### Response:\n{output}"
+                dataset.append({"text": formatted})
+            except AttributeError:
+                continue # Skip if format is slightly off
+
+    with open(output_file, 'w') as f:
+        for entry in dataset:
+            f.write(json.dumps(entry) + "\n")
     
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        quantization_config=bnb_config,
-        device_map="auto"
-    )
-
-    # 3. LoRA Setup
-    peft_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
-    model = get_peft_model(model, peft_config)
-
-    # 4. Data Preparation (Manual Tokenization for stability)
-    dataset = load_dataset("json", data_files=dataset_path, split="train")
-    
-    def tokenize_function(examples):
-        return tokenizer(examples["text"], truncation=True, max_length=1024)
-
-    tokenized_dataset = dataset.map(tokenize_function, batched=False)
-
-    # 5. Training Arguments
-    training_args = TrainingArguments(
-        output_dir=output_dir,
-        per_device_train_batch_size=1, # Reduced for A2000 safety
-        gradient_accumulation_steps=4,
-        learning_rate=2e-4,
-        logging_steps=1,
-        max_steps=40, # Enough for 12 examples
-        fp16=True,
-        save_total_limit=1,
-        report_to="none"
-    )
-
-    # 6. The Standard Trainer (Rock Solid)
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_dataset,
-        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
-    )
-
-    print("Knowledge Injection Started...")
-    trainer.train()
-    
-    # 7. Save the expertise
-    model.save_pretrained(output_dir)
-    print(f"Expertise saved to {output_dir}")
+    print(f"✅ Created {len(dataset)} structured logic samples in {output_file}")
 
 if __name__ == "__main__":
-    import sys
-    # This picks up the "v1_2" from the command line
-    if len(sys.argv) > 1:
-        version_name = sys.argv[1]
-    else:
-        version_name = "v1"
-        
-    print(f"🛠️ Training version: {version_name}")
-    train_model(version_name)
+    # Ensure raw file exists
+    parse_excerpts_to_jsonl("data/raw/excerpts.txt", "data/processed/train_v2_excerpts.jsonl")
