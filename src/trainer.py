@@ -14,7 +14,8 @@ import os
 def train_7b_model(version="v2"):
     model_id = "Qwen/Qwen2.5-7B-Instruct"
     dataset_path = f"data/processed/train_{version}_excerpts.jsonl"
-    output_dir = f"models/{version}_weights"
+    output_dir = f"/scratch/project_2017556/quantum-slm/models/{version}_weights"
+    os.makedirs(output_dir, exist_ok=True)
 
     # --- DECISION 1: 4-BIT NF4 QUANTIZATION ---
     # Why: A 7B model in FP16 takes 14GB VRAM just to load (exceeding your 12GB).
