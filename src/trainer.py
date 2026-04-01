@@ -13,9 +13,9 @@ from transformers import (
 from peft import LoraConfig, get_peft_model
 import os
 
-def train_7b_model(version="v2"):
+def train_7b_model(version="v3"):
     model_id = "Qwen/Qwen2.5-7B-Instruct"
-    dataset_path = f"data/processed/train_{version}_excerpts.jsonl"
+    dataset_path = f"data/processed/train_v2_excerpts.jsonl"
     output_dir = f"/scratch/project_2017556/quantum-slm/models/{version}_weights"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -70,18 +70,20 @@ def train_7b_model(version="v2"):
     # On an A2000, 2048 length might trigger an OOM during the backward pass.
     tokenized_dataset = dataset.map(tokenize_function, batched=False)
 
-    # --- DECISION 5: AGGRESSIVE GRADIENT ACCUMULATION ---
     training_args = TrainingArguments(
         output_dir=output_dir,
-        per_device_train_batch_size=1,   # Must be 1 for 7B models on 12GB
-        gradient_accumulation_steps=16,  # Why: Simulates a batch size of 16 (1*16).
-                                         # Smaller batches cause unstable gradients; 16 is "smooth."
-        learning_rate=1e-4,              # Standard for LoRA; higher can "break" the weights.
-        logging_steps=1,
-        max_steps=50,                    # Number of iterations
-        fp16=True,                       # Faster on NVIDIA Ampere (A2000)
-        optim="paged_adamw_32bit",       # Why: Offloads optimizer state to CPU RAM if needed.
-        save_total_limit=1,
+        # --- NEW OPTIMIZED SETTINGS FOR 32GB V100 ---
+        per_device_train_batch_size=4,   # Increased from 1. Uses more VRAM for speed.
+        gradient_accumulation_steps=4,    # Decreased from 16. Total batch stays 16 (4*4=16).
+        
+        learning_rate=1e-4,               
+        logging_steps=5,                 # Logging every step is slow; 5 is better for 500 steps.
+        max_steps=500,                   # Increased for better "Logic Injection" quality.
+        save_steps=100,                  # Save every 100 steps in case of April 2nd expiration.
+        
+        fp16=True,                       
+        optim="adamw_torch",             # You don't need "paged" anymore; 32GB can hold the state.
+        save_total_limit=2,              # Keep the last two checkpoints.
         report_to="none"
     )
 
@@ -100,5 +102,5 @@ def train_7b_model(version="v2"):
 
 if __name__ == "__main__":
     import sys
-    version = sys.argv[1] if len(sys.argv) > 1 else "v2"
+    version = sys.argv[1] if len(sys.argv) > 1 else "v3"
     train_7b_model(version)
