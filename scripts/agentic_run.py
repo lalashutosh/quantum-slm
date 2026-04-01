@@ -1,80 +1,108 @@
+from langchain_classic.agents import create_react_agent, AgentExecutor
+from langchain_classic.tools import Tool
+from langchain_core.prompts import PromptTemplate
+from langchain_huggingface import HuggingFacePipeline
+from transformers import pipeline
+
+
+# Import your existing V1 components
 import sys
 import os
-import glob
-import torch
 
-# PATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Get the directory of the current script (agentic_run.py)
+script_dir = os.path.dirname(__file__)
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from peft import PeftModel
-from src.rag.agentic_rag import AgenticQuantumRAG
+# Calculate the path to the project root (one level up from 'scripts')
+project_root = os.path.abspath(os.path.join(script_dir, os.pardir))
 
-# 1. CONFIGURATION (Matching V1 setup)
-MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-ADAPTER_PATH = "models/v1_2_weights"
-DB_PATH = "./rag_db"
-PAPERS_DIR = "data/raw/pdfs" 
+# Add the project root to sys.path
+if project_root not in sys.path:
+    sys.path.insert(0, project_root) # Insert at the beginning for highest priority
 
-def main():
-    print("🚀 Initializing Agentic Quantum-RAG System...")
-    
-    # --- PHASE 1: LOAD FINE-TUNED SLM (4-bit) ---
-    print("Loading Specialized SLM (4-bit QLoRA)...")
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-    )
-    
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    base_model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID, 
-        quantization_config=bnb_config,
-        device_map="auto"
-    )
-    model = PeftModel.from_pretrained(base_model, ADAPTER_PATH)
+# Now your imports should work
+from src.rag.rag_system import QuantumRAG
 
-    # --- PHASE 2: INITIALIZE AGENTIC RAG ---
-    # AgenticQuantumRAG needs the model and tokenizer at init to build the LangChain pipeline
-    rag = AgenticQuantumRAG(
-        persist_path=DB_PATH, 
-        embedding_model="BAAI/bge-large-en-v1.5",
-        model=model,
-        tokenizer=tokenizer
-    )
 
-    # --- PHASE 3: DYNAMIC INDEXING (Check if DB exists) ---
-    if not os.path.exists(DB_PATH):
-        pdf_files = glob.glob(os.path.join(PAPERS_DIR, "*.pdf"))
-        if not pdf_files:
-            print(f"Error: No PDF files found in {PAPERS_DIR}. Please check the folder.")
-            return
 
-        print(f"Found {len(pdf_files)} papers. Starting dynamic ingestion...")
-        for pdf_path in pdf_files:
-            paper_id = os.path.splitext(os.path.basename(pdf_path))[0]
-            print(f"Processing: {paper_id}")
-            rag.index_paper(
-                pdf_path=pdf_path, 
-                paper_id=paper_id, 
-                metadata={"source": "research_corpus"}
+class AgenticQuantumRAG(QuantumRAG):
+    """Upgraded Orchestrator featuring Agentic RAG capabilities."""
+
+    def __init__(self, persist_path: str, embedding_model: str, model, tokenizer):
+        # Initialize V1 components
+        super().__init__(persist_path, embedding_model)
+        
+        # 1. Wrap your local model in a HuggingFace Pipeline for LangChain compatibility
+        hf_pipeline = pipeline(
+            "text-generation",
+            model=model,
+            tokenizer=tokenizer,
+            max_new_tokens=250,
+            temperature=0.1,
+            repetition_penalty=1.1,
+            top_p=0.9,
+            do_sample=True,
+            return_full_text=False
+        )
+        self.llm = HuggingFacePipeline(pipeline=hf_pipeline)
+        
+        # 2. Set up the Agent Executor
+        self.agent_executor = self._setup_agent()
+
+    def _setup_agent(self):
+        """Creates the Agent and defines its tools."""
+        
+        # Define the retriever as a tool the agent can call
+        tools = [
+            Tool(
+                name="Quantum_Knowledge_Base",
+                func=self._tool_retrieve,
+                description="Use this tool to search for quantum physics papers, equations, and mathematical contexts. Input should be a specific search query."
             )
-        print("Vector database created successfully.")
-    else:
-        print("Vector database found. Ready for Agentic Reasoning.")
+            # You can easily add more tools here later:
+            # Tool(name="Calculator", func=math_eval, description="Use for solving equations.")
+        ]
 
-    # --- PHASE 4: AGENTIC RESEARCH QUERY ---
-    query = "Search the database for experiments on SVM accuracy and explain what happens when coherent noise reaches the pi/6 threshold."
-    
-    print(f"\n🧠 Querying Agent: {query}")
-    response = rag.generate_agentic_response(query)
-    
-    print("\n" + "="*50)
-    print(" 🤖 AGENTIC RESEARCH ASSISTANT RESPONSE:")
-    print("="*50)
-    print(response)
-    print("="*50)
+        # Define a ReAct (Reason + Act) prompt
+        # This teaches the LLM to think step-by-step and use tools
+        react_template = """Answer the following questions as best you can. You have access to the following tools:
 
-if __name__ == "__main__":
-    main()
+{tools}
+
+Use the following format:
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+
+        prompt = PromptTemplate.from_template(react_template)
+
+        # Create the agent and the executor
+        agent = create_agent(self.llm, tools, prompt)
+        return AgentExecutor(
+            agent=agent, 
+            tools=tools, 
+            verbose=True, # Great for debugging the agent's "Thought" process
+            handle_parsing_errors=True,
+            max_iterations=4 # Prevents infinite loops if the model gets confused
+        )
+
+    def _tool_retrieve(self, query: str) -> str:
+        """Helper method to format retrieved docs for the agent."""
+        # Using your V1 MMR retrieval
+        context_docs = self.retriever.mmr_retrieve(query)
+        if not context_docs:
+            return "No relevant documents found in the knowledge base."
+        return "\n\n".join([d.page_content for d in context_docs])
+
+    def generate_agentic_response(self, query: str):
+        """Executes the agentic RAG loop."""
+        print(f"🤖 Agent is thinking about: {query}")
+        result = self.agent_executor.invoke({"input": query})
+        return result['output']
