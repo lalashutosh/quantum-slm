@@ -38,6 +38,8 @@ def train_7b_model(version="v2"):
         device_map="auto",
         trust_remote_code=True
     )
+
+    model = prepare_model_for_kbit_training(model)
     # Why: This is the MOST IMPORTANT line for 12GB GPUs.
     # It stops storing all intermediate activations for the backward pass, 
     # re-calculating them on the fly instead. Reduces memory usage by ~30-50%.
