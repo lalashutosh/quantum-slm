@@ -25,4 +25,7 @@ papers/*
 # System
 .DS_Store
 
+sendall
+qml_papers.tar.gz
+
 

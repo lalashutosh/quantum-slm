@@ -1,0 +1,92 @@
+version: "v3"
+benchmarks:
+
+  - id: "q1_poisoning_attacks_detailed"
+
+    paper_name: "Adversarial Data Poisoning Attacks on Quantum Machine Learning in the NISQ Era (2024)"
+
+    user_input: |
+      ABSTRACT: With the growing interest in Quantum Machine Learning (QML) and the increasing availability of quantum computers through cloud providers, addressing the potential security risks associated with QML has become an urgent priority. One key concern in the QML domain is the threat of data poisoning attacks in the current quantum cloud setting... Classical data poisoning techniques require significant knowledge and training to generate poisoned data, and lack noise resilience, making them ineffective for QML models in the Noisy Intermediate Scale Quantum (NISQ) era. In this work, we first propose a simple yet effective technique to measure intra-class encoder state similarity (ESS)... we introduce a Quantum Indiscriminate Data Poisoning attack, QUID. Through extensive experiments conducted in both noiseless and noisy environments... QUID achieves up to 92% accuracy degradation...
+      INTRODUCTION: Quantum computing is rapidly progressing... we propose a quantum indiscriminate data poisoning attack, QUID, using a novel label-flipping strategy.
+
+    concepts: ["QUID", "encoder state similarity", "label-flipping", "accuracy degradation", "noise resilience"]
+
+    reference: |
+      Paper: [Adversarial Data Poisoning Attacks on Quantum Machine Learning in the NISQ Era, Satwik Kundu and Swaroop Ghosh, 2024]
+      Problem: [Current quantum machine learning models deployed in cloud settings face critical security risks from data poisoning attacks. Classical data poisoning techniques are ineffective for QML in the NISQ era because they lack resilience to quantum hardware noise and require extensive knowledge of the training procedure.]
+      Approach: [The authors introduce a novel Quantum Indiscriminate Data Poisoning (QUID) attack that relies on intra-class encoder state similarity (ESS). This technique determines optimal poisoned labels without needing knowledge of the victim model. The algorithm assigns incorrect labels to maximize deviation of encoded states.]
+      Result: [QUID achieved up to 92% accuracy degradation across architectures in both noiseless and noisy environments, bypassing classical defenses and maintaining over 50% degradation.]
+      Implication: [Reveals critical vulnerabilities in cloud-based QML and highlights the urgent need for quantum-specific defenses.]
+      Open questions: [How can robust data sanitization or defense techniques mitigate indiscriminate poisoning attacks on near-term quantum devices?]
+
+
+  - id: "q2_auto_quantum_kernels"
+
+    paper_name: "Automatic and Effective Discovery of Quantum Kernels (2024)"
+
+    user_input: |
+      Paper: [Automatic and effective discovery of quantum kernels, Massimiliano Incudini et al., 2024]
+      Problem: [Quantum kernels can capture complex relationships but designing optimal kernels is difficult and manual.]
+      Approach: [A heuristic AutoML-inspired algorithm using combinatorial circuit representations and Bayesian optimization.]
+      Result: [Discovered kernels matched or exceeded state-of-the-art performance in anomaly detection tasks.]
+
+    concepts: ["quantum kernels", "AutoML", "Bayesian optimization", "dynamical Lie algebra", "kernel discovery"]
+
+    reference: |
+      Implication: [This automated search methodology lowers the barrier to applying quantum kernel methods by eliminating manual ansatz engineering. It enables reliable discovery of expressive, task-specific feature maps.]
+      Open questions: [Can this framework scale to larger qubit systems without being limited by exponential search complexity or noise?]
+
+
+  - id: "q3_cdqkl_speech"
+
+    paper_name: "Consensus-based Distributed Quantum Kernel Learning for Speech Recognition (2024)"
+
+    user_input: |
+      Abstract—This paper presents a Consensus-based Distributed Quantum Kernel Learning (CDQKL) framework aimed at improving speech recognition through distributed quantum computing. CDQKL addresses scalability and data privacy challenges by distributing computation across quantum terminals connected via classical channels... Experimental results show competitive accuracy.
+      INTRODUCTION: QKL faces scalability challenges due to large kernel matrices and centralized systems raise privacy concerns... this paper introduces CDQKL.
+
+    concepts: ["CDQKL", "distributed quantum learning", "data privacy", "kernel matrix scalability", "consensus learning"]
+
+    reference: |
+      Paper: [Consensus-based Distributed Quantum Kernel Learning for Speech Recognition, Kuan-Cheng Chen et al., 2024]
+      Problem: [Centralized quantum kernel learning suffers from scalability issues due to large kernel matrices and raises privacy concerns when handling sensitive data.]
+      Approach: [CDQKL distributes computation across quantum nodes. Each node trains locally using QSVM and shares model parameters to achieve consensus without sharing raw data.]
+      Result: [Achieves competitive accuracy while improving scalability and preserving privacy.]
+      Implication: [Provides a scalable and privacy-preserving framework for QML in sensitive domains.]
+      Open questions: [How can robustness against noise and Byzantine faults be ensured in distributed quantum systems?]
+
+
+  - id: "q4_qnn_robustness"
+
+    paper_name: "Experimental Robustness Benchmarking of Quantum Neural Networks on a Superconducting Quantum Processor (2024)"
+
+    user_input: |
+      Paper: [Experimental robustness benchmarking of quantum neural networks on a superconducting quantum processor, Zhaoyun Chen et al., 2024]
+      Problem: [Lack of experimental robustness evaluation for QNNs due to adversarial generation challenges and noise.]
+      Approach: [Mask-FGSM adversarial attack implemented on a 20-qubit processor.]
+      Result: [Experimental robustness closely matches theoretical bounds; QNNs show higher robustness due to noise-induced gradient masking.]
+
+    concepts: ["QNN robustness", "Mask-FGSM", "gradient masking", "quantum noise", "adversarial attacks"]
+
+    reference: |
+      Implication: [Establishes a practical framework for benchmarking QML robustness on hardware. Shows that quantum noise can enhance robustness via gradient masking.]
+      Open questions: [How will robustness change in fault-tolerant quantum systems where noise is reduced?]
+
+
+  - id: "q5_qml_fraud_detection"
+
+    paper_name: "Financial Fraud Detection: A Comparative Study of Quantum Machine Learning Models (2023)"
+
+    user_input: |
+      Abstract: A comparative study of four QML models for fraud detection shows QSVC achieving highest performance with F1 score of 0.98. Other models include VQC, Estimator QNN, and Sampler QNN...
+      INTRODUCTION: Fraud detection is critical in finance. This study evaluates QML approaches on the BankSim dataset.
+
+    concepts: ["QSVC", "VQC", "Estimator QNN", "Sampler QNN", "fraud detection", "F1 score"]
+
+    reference: |
+      Paper: [Financial Fraud Detection: A Comparative Study of Quantum Machine Learning Models, Nouhaila Innan et al., 2023]
+      Problem: [Classical fraud detection models struggle with large and complex datasets, motivating exploration of QML for improved performance.]
+      Approach: [Comparison of QSVC, VQC, Estimator QNN, and Sampler QNN using multiple feature maps on the BankSim dataset.]
+      Result: [QSVC with ZFeatureMap achieved best performance with F1 score of 0.98. Other models showed lower performance.]
+      Implication: [Demonstrates strong potential of kernel-based QML models for financial anomaly detection.]
+      Open questions: [How can performance of QNN-based models be improved for high-dimensional financial data?]
